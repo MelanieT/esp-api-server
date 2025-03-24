@@ -6,12 +6,13 @@
 #include "HttpStatus.h"
 
 #include <utility>
+#include <functional>
 
-Url::Url(std::string method, std::string url, void (*handler)(const ApiHttpRequest& request, ApiHttpResponse& response))
+Url::Url(std::string method, std::string url, std::function<void(const ApiHttpRequest& request, ApiHttpResponse& response)> handler)
 {
     m_method = std::move(method);
     m_url = std::move(url);
-    m_handler = handler;
+    m_handler = std::move(handler);
 }
 
 std::string Url::method()
@@ -26,7 +27,7 @@ std::string Url::url()
 
 void Url::call(const ApiHttpRequest &request, ApiHttpResponse &response)
 {
-    (*m_handler)(request, response);
+    (m_handler)(request, response);
 }
 
 UrlMapper::UrlMapper()
@@ -34,9 +35,10 @@ UrlMapper::UrlMapper()
 
 std::list<Url> UrlMapper::m_mapping;
 
-void UrlMapper::AddMapping(std::string method, std::string url, void (*handler)(const ApiHttpRequest &, ApiHttpResponse &))
+void UrlMapper::AddMapping(std::string method, std::string url,
+                           std::function<void(const ApiHttpRequest &, ApiHttpResponse &)> handler)
 {
-    auto map = Url(std::move(method), std::move(url), handler);
+    auto map = Url(std::move(method), std::move(url), std::move(handler));
     m_mapping.emplace_back(map);
 }
 
